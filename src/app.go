@@ -16,9 +16,17 @@ type App struct {
 }
 
 func (a *App) printHeader() {
-	fmt.Println("Interactive Console — พิมพ์ /help เพื่อดูคำสั่ง หรือ /exit เพื่อออก")
+	fmt.Println()
+	fmt.Println("  ╔═══════════════════════════════════════════════════════╗")
+	fmt.Println("  ║        Flash Drive Backup CLI (GORM Engine)          ║")
+	fmt.Println("  ║        by Hex                                        ║")
+	fmt.Println("  ╠═══════════════════════════════════════════════════════╣")
+	fmt.Println("  ║  พิมพ์ /help เพื่อดูคำสั่ง หรือ /exit เพื่อออก       ║")
+	fmt.Println("  ╚═══════════════════════════════════════════════════════╝")
+	fmt.Println()
 	if a.dest == "" || !isDir(a.dest) {
-		fmt.Println("dest เป็นค่าว่าง กรุณาตั้งค่าด้วย /dest <path>")
+		fmt.Println("  ⚠  dest เป็นค่าว่าง กรุณาตั้งค่าด้วย /dest <path>")
+		fmt.Println()
 	}
 }
 
@@ -79,7 +87,9 @@ func (a *App) command(line string) bool {
 	case "/delete":
 		a.handleDelete(parts[1:])
 	case "/exit":
-		fmt.Println("ออกจากโปรแกรม")
+		fmt.Println()
+		fmt.Println("  ออกจากโปรแกรม บายย 👋")
+		fmt.Println()
 		return true
 	default:
 		fmt.Println("Unknown command. Type /help to see available commands.")
@@ -88,5 +98,23 @@ func (a *App) command(line string) bool {
 }
 
 func (a *App) help() {
-	fmt.Println("คำสั่งที่ใช้ได้: /add, /check, /clean, /delete, /dest, /exit, /help, /list, /move, /set, /settings, /source")
+	fmt.Println()
+	fmt.Println("  ┌─────────────────────────────────────────────┐")
+	fmt.Println("  │  คำสั่งที่ใช้ได้:                             │")
+	fmt.Println("  │                                             │")
+	fmt.Println("  │  /source <path>  -  กำหนดโฟลเดอร์ต้นทาง      │")
+	fmt.Println("  │  /dest   <path>  -  กำหนดโฟลเดอร์ปลายทาง    │")
+	fmt.Println("  │  /set  <s> <d>   -  ตั้งค่า source+dest     │")
+	fmt.Println("  │  /add   <d> <f>  -  เพิ่มไฟล์ใน DB          │")
+	fmt.Println("  │  /settings       -  แสดงการตั้งค่าทั้งหมด    │")
+	fmt.Println("  │  /list source    -  แสดงไฟล์ต้นทาง          │")
+	fmt.Println("  │  /list dest      -  แสดงไฟล์ปลายทาง        │")
+	fmt.Println("  │  /list db        -  แสดงประวัติจาก DB       │")
+	fmt.Println("  │  /move all       -  ย้ายไฟล์ทั้งหมด         │")
+	fmt.Println("  │  /check          -  ตรวจความถูกต้อง         │")
+	fmt.Println("  │  /delete dest f  -  ลบไฟล์                  │")
+	fmt.Println("  │  /clean          -  ลบข้อมูลทั้งหมดใน DB    │")
+	fmt.Println("  │  /exit           -  ออกจากโปรแกรม           │")
+	fmt.Println("  └─────────────────────────────────────────────┘")
+	fmt.Println()
 }
