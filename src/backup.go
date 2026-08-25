@@ -35,7 +35,7 @@ func (a *App) handleMove(raw string) {
 		}
 		names = names[:0]
 		for _, entry := range entries {
-			if entry.Type().IsRegular() {
+			if isBackupFile(entry) {
 				names = append(names, entry.Name())
 			}
 		}

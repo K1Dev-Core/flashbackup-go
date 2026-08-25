@@ -68,7 +68,7 @@ func (a *App) listDirectory(raw, label string) {
 	}
 	count := 0
 	for _, entry := range entries {
-		if entry.Type().IsRegular() {
+		if isBackupFile(entry) {
 			fmt.Println(entry.Name())
 			count++
 		}

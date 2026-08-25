@@ -44,7 +44,7 @@ func (a *App) destinationNames() []string {
 	}
 	if entries, err := os.ReadDir(a.dest); err == nil {
 		for _, entry := range entries {
-			if entry.Type().IsRegular() {
+			if isBackupFile(entry) {
 				seen[entry.Name()] = true
 			}
 		}

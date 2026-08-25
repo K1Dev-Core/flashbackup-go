@@ -56,3 +56,7 @@ func isDir(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
 }
+
+func isBackupFile(entry os.DirEntry) bool {
+	return entry.Type().IsRegular() && entry.Name() != ".DS_Store" && !strings.HasPrefix(entry.Name(), "._")
+}
