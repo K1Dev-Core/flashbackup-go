@@ -9,8 +9,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func (a *App) handleMove(raw string) {
@@ -41,19 +39,83 @@ func (a *App) handleMove(raw string) {
 		}
 	}
 	start := time.Now()
+	results := a.moveFiles(names)
 	moved := 0
-	for _, name := range names {
-		if err := a.moveOne(name); err != nil {
-			fmt.Printf("%s: %v\n", name, err)
+	for _, result := range results {
+		if result.err != nil {
+			fmt.Printf("%s: %v\n", result.name, result.err)
 			continue
 		}
 		moved++
-		fmt.Println("Moved:", name)
+		fmt.Println("Moved:", result.name)
 	}
 	fmt.Printf("Moved %d file(s) in %.2f ms.\n", moved, float64(time.Since(start).Nanoseconds())/1e6)
 }
 
-func (a *App) moveOne(name string) error {
+type moveResult struct {
+	name string
+	err  error
+}
+
+func (a *App) moveFiles(names []string) []moveResult {
+	results := make([]moveResult, 0, len(names))
+	existing := map[string]bool{}
+	if len(names) > 0 {
+		var files []File
+		if err := a.db.Where("dest = ? AND filename IN ?", a.dest, names).Find(&files).Error; err != nil {
+			for _, name := range names {
+				results = append(results, moveResult{name: name, err: fmt.Errorf("check database: %w", err)})
+			}
+			return results
+		}
+		for _, file := range files {
+			existing[file.Filename] = true
+		}
+	}
+
+	moved := make([]File, 0, len(names))
+	movedNames := make([]string, 0, len(names))
+	for _, name := range names {
+		if existing[name] {
+			results = append(results, moveResult{name: name, err: errors.New("file already exists in database history")})
+			continue
+		}
+		if err := a.transferFile(name); err != nil {
+			results = append(results, moveResult{name: name, err: err})
+			continue
+		}
+		moved = append(moved, File{Dest: a.dest, Filename: name})
+		movedNames = append(movedNames, name)
+		results = append(results, moveResult{name: name})
+	}
+	if len(moved) == 0 {
+		return results
+	}
+	if err := a.db.Create(&moved).Error; err != nil {
+		rollbackErrors := map[string]error{}
+		for i := len(movedNames) - 1; i >= 0; i-- {
+			name := movedNames[i]
+			src := filepath.Join(a.source, name)
+			dst := filepath.Join(a.dest, name)
+			if rollbackErr := transfer(dst, src); rollbackErr != nil {
+				rollbackErrors[name] = rollbackErr
+			}
+		}
+		for i := range results {
+			if results[i].err != nil {
+				continue
+			}
+			if rollbackErr := rollbackErrors[results[i].name]; rollbackErr != nil {
+				results[i].err = fmt.Errorf("save history: %v; rollback: %v", err, rollbackErr)
+			} else {
+				results[i].err = fmt.Errorf("save history: %w", err)
+			}
+		}
+	}
+	return results
+}
+
+func (a *App) transferFile(name string) error {
 	if err := validFilename(name); err != nil {
 		return err
 	}
@@ -71,20 +133,8 @@ func (a *App) moveOne(name string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("check destination: %w", err)
 	}
-	var existing File
-	if err := a.db.Where("dest = ? AND filename = ?", a.dest, name).First(&existing).Error; err == nil {
-		return errors.New("file already exists in database history")
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("check database: %w", err)
-	}
 	if err := transfer(src, dst); err != nil {
 		return err
-	}
-	if err := a.db.Create(&File{Dest: a.dest, Filename: name}).Error; err != nil {
-		if rollbackErr := transfer(dst, src); rollbackErr != nil {
-			return fmt.Errorf("save history: %v; rollback: %v", err, rollbackErr)
-		}
-		return fmt.Errorf("save history: %w", err)
 	}
 	return nil
 }
