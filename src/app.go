@@ -32,6 +32,14 @@ func (a *App) printHeader() {
 }
 
 func (a *App) run() {
+	if interactiveTerminal() {
+		a.runInteractive()
+		return
+	}
+	a.runScanner()
+}
+
+func (a *App) runScanner() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("> ")
