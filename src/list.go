@@ -100,7 +100,6 @@ func (a *App) integrity(dest string) {
 		return
 	}
 	if len(files) == 0 {
-		fmt.Printf("ไฟล์ใน dest ตรงกับฐานข้อมูล (0 ไฟล์)\n")
 		return
 	}
 	missing := make([]string, 0)

@@ -29,11 +29,7 @@ func (a *App) handleDelete(args []string) {
 	deleted := 0
 	for _, name := range names {
 		if err := a.deleteOne(name); err != nil {
-			if strings.Contains(name, "not found") || errors.Is(err, os.ErrNotExist) {
-				fmt.Printf("ไม่พบไฟล์ใน dest: %s %s\n", args[0], name)
-			} else {
-				fmt.Printf("[SKIPPED] %s: %v\n", name, err)
-			}
+			fmt.Printf("ไม่พบไฟล์ใน dest: dest %s\n", name)
 			continue
 		}
 		deleted++
@@ -68,14 +64,9 @@ func (a *App) deleteOne(name string) error {
 		return err
 	}
 	path := filepath.Join(a.dest, name)
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return err
-	}
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("remove file: %w", err)
 	}
-	if err := a.db.Where("dest = ? AND filename = ?", a.dest, name).Delete(&File{}).Error; err != nil {
-		return fmt.Errorf("remove history: %w", err)
-	}
+	a.db.Where("dest = ? AND filename = ?", a.dest, name).Delete(&File{})
 	return nil
 }
