@@ -135,6 +135,78 @@ cd /tmp/flashbackup-test/example
 /exit
 ```
 
+## ทดสอบเทียบกันบน Windows
+
+บน Windows ให้ใช้ `mockdata.exe` จากชุดโจทย์เพื่อสร้างไฟล์ แล้วใช้ source คนละชุดสำหรับโปรแกรมตัวอย่างและโปรแกรมนี้
+
+1. วาง `mockdata.exe` และ `flashbackup.exe` ของอาจารย์ไว้ในโฟลเดอร์เดียวกัน แล้วเปิด PowerShell:
+
+```powershell
+cd C:\path\to\midterm
+.\mockdata.exe
+```
+
+จะได้โฟลเดอร์ `data10` และ `data1000` ให้เริ่มทดสอบด้วย `data10`
+
+2. ดาวน์โหลด `flashbackup-windows-amd64.exe` จากโฟลเดอร์ `dist` ใน repository แล้วเตรียมโฟลเดอร์ทดสอบ:
+
+```powershell
+$test = "$env:TEMP\flashbackup-test"
+Remove-Item -Recurse -Force $test -ErrorAction SilentlyContinue
+New-Item -ItemType Directory "$test\example\source", "$test\example\dest" -Force
+New-Item -ItemType Directory "$test\ours\source", "$test\ours\dest" -Force
+Copy-Item .\data10\* "$test\example\source\"
+Copy-Item .\data10\* "$test\ours\source\"
+```
+
+3. รันโปรแกรมตัวอย่างในหน้าต่าง PowerShell หนึ่ง:
+
+```powershell
+cd "$test\example"
+.\flashbackup.exe
+```
+
+พิมพ์คำสั่ง:
+
+```text
+/help
+/source C:\Users\ชื่อผู้ใช้\AppData\Local\Temp\flashbackup-test\example\source
+/dest C:\Users\ชื่อผู้ใช้\AppData\Local\Temp\flashbackup-test\example\dest
+/list source
+/move all
+/list dest
+/list db
+/check
+/exit
+```
+
+4. รันโปรแกรมของเราในหน้าต่าง PowerShell ใหม่ โดยใช้ binary ตาม CPU:
+
+```powershell
+cd C:\path\to\flashbackup-go
+.\dist\flashbackup-windows-amd64.exe -db "$test\ours\flashbackup.db"
+```
+
+ถ้าเป็น Windows ARM ให้ใช้ `flashbackup-windows-arm64.exe`
+
+พิมพ์คำสั่งเดิม แต่เปลี่ยน path เป็น `ours`:
+
+```text
+/help
+/source C:\Users\ชื่อผู้ใช้\AppData\Local\Temp\flashbackup-test\ours\source
+/dest C:\Users\ชื่อผู้ใช้\AppData\Local\Temp\flashbackup-test\ours\dest
+/list source
+/move all
+/list dest
+/list db
+/check
+/exit
+```
+
+ผลที่ควรได้จากทั้งสองโปรแกรมคือ source มี 10 ไฟล์ก่อนย้าย, destination มี 10 ไฟล์หลังย้าย, DB มี 10 รายการ และ `/check` ผ่าน
+
+สำหรับทดสอบความเร็ว ให้เปลี่ยน `data10` เป็น `data1000` และ copy source แยกให้ทั้งสองโปรแกรมเหมือนเดิม จากนั้นเปรียบเทียบเวลาที่แสดงหลัง `/move all`
+
 ## ทดสอบโปรแกรมของเรา
 
 เตรียม source อีกชุดหนึ่ง:
