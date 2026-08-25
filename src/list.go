@@ -10,7 +10,7 @@ import (
 
 func (a *App) handleList(args []string) {
 	if len(args) == 0 {
-		fmt.Println("Usage: /list source|dest|db [path]")
+		fmt.Println("วิธีใช้: /list source | dest | db [path]")
 		return
 	}
 	kind := strings.ToLower(args[0])
@@ -28,7 +28,7 @@ func (a *App) handleList(args []string) {
 		if path == "" {
 			path = a.dest
 		}
-		a.listDirectory(path, "destination")
+		a.listDirectory(path, "dest")
 	case "db":
 		if path == "" {
 			path = a.dest
@@ -44,15 +44,16 @@ func (a *App) handleList(args []string) {
 			return
 		}
 		if len(files) == 0 {
-			fmt.Println("[INFO] No backup history for", path)
+			fmt.Printf("ยังไม่มีประวัติของ dest: %s\n", path)
 			return
 		}
-		fmt.Println("[DB] Backup history for:", path)
+		fmt.Printf("ประวัติ dest: %s\n", path)
+		fmt.Println("idx\tfilename")
 		for _, file := range files {
-			fmt.Println(file.Filename)
+			fmt.Printf("%d\t%s\n", file.Idx, file.Filename)
 		}
 	default:
-		fmt.Println("Usage: /list source|dest|db [path]")
+		fmt.Println("วิธีใช้: /list source | dest | db [path]")
 	}
 }
 
@@ -67,16 +68,21 @@ func (a *App) listDirectory(raw, label string) {
 		fmt.Println("Warning:", err)
 		return
 	}
-	count := 0
+	names := make([]string, 0)
 	for _, entry := range entries {
 		if isBackupFile(entry) {
-			fmt.Println(entry.Name())
-			count++
+			names = append(names, entry.Name())
 		}
 	}
-	if count == 0 {
-		fmt.Println("[INFO] No files in", label, path)
+	if len(names) == 0 {
+		fmt.Printf("ไม่มีไฟล์ใน %s: %s\n", label, path)
+		return
 	}
+	fmt.Printf("%s: %s\n", label, path)
+	for _, name := range names {
+		fmt.Println(name)
+	}
+	fmt.Printf("(%d ไฟล์)\n", len(names))
 }
 
 func (a *App) check() {
@@ -93,17 +99,22 @@ func (a *App) integrity(dest string) {
 		fmt.Println("Warning:", err)
 		return
 	}
-	missing := 0
-	fmt.Println("[INTEGRITY] Checking destination:", dest)
+	if len(files) == 0 {
+		fmt.Printf("ไฟล์ใน dest ตรงกับฐานข้อมูล (0 ไฟล์)\n")
+		return
+	}
+	missing := make([]string, 0)
 	for _, file := range files {
 		if _, err := os.Stat(filepath.Join(dest, file.Filename)); errors.Is(err, os.ErrNotExist) {
-			fmt.Println("[ALERT] Missing:", file.Filename)
-			missing++
+			missing = append(missing, file.Filename)
 		}
 	}
-	if missing == 0 {
-		fmt.Println("[OK] Integrity check passed.")
-	} else {
-		fmt.Printf("[DONE] Integrity check found %d missing file(s).\n", missing)
+	if len(missing) == 0 {
+		fmt.Printf("ไฟล์ใน dest ตรงกับฐานข้อมูล (%d ไฟล์)\n", len(files))
+		return
+	}
+	fmt.Println("ไฟล์ใน dest ไม่ตรงกับฐานข้อมูล")
+	for _, name := range missing {
+		fmt.Printf("มีในฐานข้อมูลแต่ไม่มีใน dest: %s\n", name)
 	}
 }

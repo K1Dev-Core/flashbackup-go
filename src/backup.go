@@ -39,24 +39,21 @@ func (a *App) handleMove(raw string) {
 		}
 	}
 	start := time.Now()
-	fmt.Println("[PROCESSING] Moving files to destination...")
-	results := a.moveFiles(names)
+	startStr := start.Format("15:04:05.000")
+	results := a.moveFilesWithProgress(names, startStr)
+	finish := time.Now()
+	finishStr := finish.Format("15:04:05.000")
+	elapsed := float64(finish.Sub(start).Nanoseconds()) / 1e6
 	moved := 0
-	verbose := len(results) <= 20
 	for _, result := range results {
-		if result.err != nil {
-			fmt.Printf("[SKIPPED] %s: %v\n", result.name, result.err)
-			continue
-		}
-		moved++
-		if verbose {
-			fmt.Println("[SUCCESS] Moved:", result.name)
+		if result.err == nil {
+			moved++
 		}
 	}
-	if !verbose && moved > 0 {
-		fmt.Printf("[SUCCESS] %d files moved successfully.\n", moved)
-	}
-	fmt.Printf("[DONE] Moved %d file(s) in %.2f ms.\n", moved, float64(time.Since(start).Nanoseconds())/1e6)
+	fmt.Printf("ย้ายไฟล์แล้ว %d ไฟล์\n", moved)
+	fmt.Printf("เริ่ม: %s\n", startStr)
+	fmt.Printf("สิ้นสุด: %s\n", finishStr)
+	fmt.Printf("ใช้เวลา: %.6fms\n", elapsed)
 }
 
 type moveResult struct {
@@ -64,10 +61,11 @@ type moveResult struct {
 	err  error
 }
 
-func (a *App) moveFiles(names []string) []moveResult {
-	results := make([]moveResult, 0, len(names))
+func (a *App) moveFilesWithProgress(names []string, startStr string) []moveResult {
+	total := len(names)
+	results := make([]moveResult, 0, total)
 	existing := map[string]bool{}
-	if len(names) > 0 {
+	if total > 0 {
 		var files []File
 		if err := a.db.Where("dest = ? AND filename IN ?", a.dest, names).Find(&files).Error; err != nil {
 			for _, name := range names {
@@ -80,21 +78,31 @@ func (a *App) moveFiles(names []string) []moveResult {
 		}
 	}
 
-	moved := make([]File, 0, len(names))
-	movedNames := make([]string, 0, len(names))
+	moved := make([]File, 0, total)
+	movedNames := make([]string, 0, total)
+	done := 0
+	fmt.Printf("\r[%s] %d/%d %3d%% %-30s", strings.Repeat("-", 20), 0, total, 0, "")
 	for _, name := range names {
+		done++
+		pct := done * 100 / total
+		barW := pct * 20 / 100
+		bar := strings.Repeat("#", barW) + strings.Repeat("-", 20-barW)
 		if existing[name] {
+			fmt.Printf("\r[%s] %d/%d %3d%% %-30s", bar, done, total, pct, name)
 			results = append(results, moveResult{name: name, err: errors.New("file already exists in database history")})
 			continue
 		}
 		if err := a.transferFile(name); err != nil {
+			fmt.Printf("\r[%s] %d/%d %3d%% %-30s", bar, done, total, pct, name)
 			results = append(results, moveResult{name: name, err: err})
 			continue
 		}
 		moved = append(moved, File{Dest: a.dest, Filename: name})
 		movedNames = append(movedNames, name)
 		results = append(results, moveResult{name: name})
+		fmt.Printf("\r[%s] %d/%d %3d%% %-30s", bar, done, total, pct, name)
 	}
+	fmt.Println()
 	if len(moved) == 0 {
 		return results
 	}

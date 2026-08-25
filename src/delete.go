@@ -15,7 +15,7 @@ func (a *App) handleDelete(args []string) {
 		return
 	}
 	if len(args) < 2 || strings.ToLower(args[0]) != "dest" {
-		fmt.Println("Usage: /delete dest <file1>, ...|all")
+		fmt.Println("วิธีใช้: /delete <file>,... หรือ all")
 		return
 	}
 	names, err := requestedNames(strings.Join(args[1:], " "))
@@ -26,13 +26,19 @@ func (a *App) handleDelete(args []string) {
 	if len(names) == 1 && strings.EqualFold(names[0], "all") {
 		names = a.destinationNames()
 	}
+	deleted := 0
 	for _, name := range names {
 		if err := a.deleteOne(name); err != nil {
-			fmt.Printf("[SKIPPED] %s: %v\n", name, err)
+			if strings.Contains(name, "not found") || errors.Is(err, os.ErrNotExist) {
+				fmt.Printf("ไม่พบไฟล์ใน dest: %s %s\n", args[0], name)
+			} else {
+				fmt.Printf("[SKIPPED] %s: %v\n", name, err)
+			}
 			continue
 		}
-		fmt.Println("[SUCCESS] Deleted:", name)
+		deleted++
 	}
+	fmt.Printf("ลบไฟล์แล้ว %d ไฟล์ และลบจากฐานข้อมูลแล้ว\n", deleted)
 }
 
 func (a *App) destinationNames() []string {
@@ -62,6 +68,9 @@ func (a *App) deleteOne(name string) error {
 		return err
 	}
 	path := filepath.Join(a.dest, name)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return err
+	}
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("remove file: %w", err)
 	}

@@ -10,7 +10,7 @@ import (
 	"golang.org/x/term"
 )
 
-var commands = []string{"/help", "/source", "/dest", "/list", "/move", "/check", "/delete", "/exit"}
+var commands = []string{"/help", "/source", "/dest", "/set", "/add", "/settings", "/list", "/move", "/check", "/delete", "/clean", "/exit"}
 
 func interactiveTerminal() bool {
 	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
