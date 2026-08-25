@@ -28,10 +28,10 @@ func (a *App) handleDelete(args []string) {
 	}
 	for _, name := range names {
 		if err := a.deleteOne(name); err != nil {
-			fmt.Printf("%s: %v\n", name, err)
+			fmt.Printf("[SKIPPED] %s: %v\n", name, err)
 			continue
 		}
-		fmt.Println("Deleted:", name)
+		fmt.Println("[SUCCESS] Deleted:", name)
 	}
 }
 

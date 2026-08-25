@@ -31,6 +31,7 @@ func main() {
 
 	app := &App{db: db}
 	app.loadSettings()
+	app.printHeader()
 	app.run()
 }
 

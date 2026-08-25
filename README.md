@@ -75,6 +75,7 @@ GitHub Actions จะรัน test, vet และ build ทั้ง 6 target �
 ## คำสั่งที่ใช้
 
 ```text
+/help
 /source <path>
 /dest <path>
 /list source

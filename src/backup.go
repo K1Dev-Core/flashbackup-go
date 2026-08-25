@@ -39,17 +39,18 @@ func (a *App) handleMove(raw string) {
 		}
 	}
 	start := time.Now()
+	fmt.Println("[PROCESSING] Moving files to destination...")
 	results := a.moveFiles(names)
 	moved := 0
 	for _, result := range results {
 		if result.err != nil {
-			fmt.Printf("%s: %v\n", result.name, result.err)
+			fmt.Printf("[SKIPPED] %s: %v\n", result.name, result.err)
 			continue
 		}
 		moved++
-		fmt.Println("Moved:", result.name)
+		fmt.Println("[SUCCESS] Moved:", result.name)
 	}
-	fmt.Printf("Moved %d file(s) in %.2f ms.\n", moved, float64(time.Since(start).Nanoseconds())/1e6)
+	fmt.Printf("[DONE] Moved %d file(s) in %.2f ms.\n", moved, float64(time.Since(start).Nanoseconds())/1e6)
 }
 
 type moveResult struct {

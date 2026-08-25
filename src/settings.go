@@ -44,7 +44,7 @@ func (a *App) handleSource(raw string) {
 		fmt.Println("Warning:", err)
 		return
 	}
-	fmt.Println("Source:", path)
+	fmt.Println("[OK] Source set to:", path)
 }
 
 func (a *App) handleDest(raw string) {
@@ -58,6 +58,6 @@ func (a *App) handleDest(raw string) {
 		fmt.Println("Warning:", err)
 		return
 	}
-	fmt.Println("Destination:", path)
+	fmt.Println("[OK] Destination set to:", path)
 	a.integrity(path)
 }

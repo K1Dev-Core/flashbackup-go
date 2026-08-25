@@ -44,9 +44,10 @@ func (a *App) handleList(args []string) {
 			return
 		}
 		if len(files) == 0 {
-			fmt.Println("No backup history for", path)
+			fmt.Println("[INFO] No backup history for", path)
 			return
 		}
+		fmt.Println("[DB] Backup history for:", path)
 		for _, file := range files {
 			fmt.Println(file.Filename)
 		}
@@ -74,7 +75,7 @@ func (a *App) listDirectory(raw, label string) {
 		}
 	}
 	if count == 0 {
-		fmt.Println("No files in", label, path)
+		fmt.Println("[INFO] No files in", label, path)
 	}
 }
 
@@ -93,15 +94,16 @@ func (a *App) integrity(dest string) {
 		return
 	}
 	missing := 0
+	fmt.Println("[INTEGRITY] Checking destination:", dest)
 	for _, file := range files {
 		if _, err := os.Stat(filepath.Join(dest, file.Filename)); errors.Is(err, os.ErrNotExist) {
-			fmt.Println("Missing:", file.Filename)
+			fmt.Println("[ALERT] Missing:", file.Filename)
 			missing++
 		}
 	}
 	if missing == 0 {
-		fmt.Println("Integrity check passed.")
+		fmt.Println("[OK] Integrity check passed.")
 	} else {
-		fmt.Printf("Integrity check found %d missing file(s).\n", missing)
+		fmt.Printf("[DONE] Integrity check found %d missing file(s).\n", missing)
 	}
 }
