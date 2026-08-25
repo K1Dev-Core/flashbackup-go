@@ -59,6 +59,19 @@ go build -o flashbackup ./src
 ./flashbackup -db /tmp/flashbackup.db
 ```
 
+ไฟล์ที่ build ข้ามแพลตฟอร์มไว้จะอยู่ใน `dist/`:
+
+```text
+flashbackup-darwin-amd64
+flashbackup-darwin-arm64
+flashbackup-linux-amd64
+flashbackup-linux-arm64
+flashbackup-windows-amd64.exe
+flashbackup-windows-arm64.exe
+```
+
+GitHub Actions จะรัน test, vet และ build ทั้ง 6 target นี้ทุกครั้งที่ push หรือเปิด pull request
+
 ## คำสั่งที่ใช้
 
 ```text

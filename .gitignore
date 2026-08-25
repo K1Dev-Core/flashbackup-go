@@ -3,6 +3,8 @@
 *.exe
 /flashbackup
 /src/flashbackup
+!dist/
+!dist/*.exe
 docs/midterm/flashbackup
 docs/midterm/mockdata
 docs/midterm/data10/
